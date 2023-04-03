@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biweekly Timesheet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        table {
+            width: 800px;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+         @keyframes gradientBackground {
+            0% {
+                background: linear-gradient(45deg, #006400, #90ee90);
+            }
+            50% {
+                background: linear-gradient(45deg, #90ee90, #006400);
+            }
+            100% {
+                background: linear-gradient(45deg, #006400, #90ee90);
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: gradientBackground 10s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        table {
+            width: 800px;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Biweekly Timesheet</h1>
+    <table>
+        <thead>
+            <tr>
+                <th rowspan="2">Item</th>
+                <th colspan="7">Week 1</th>
+            </tr>
+            <tr>
+                <th>Sun</th>
+                <th>Mon</th>
+                <th>Tue</th>
+                <th>Wed</th>
+                <th>Thu</th>
+                <th>Fri</th>
+                <th>Sat</th>
+            </tr>
+        </thead>
+        <tbody id="week1">
+            <!-- Table rows for week 1 will be added dynamically -->
+        </tbody>
+    </table>
+    <label for="week1EndDate">Week 1 End Date:</label>
+    <input type="date" id="week1EndDate">
+    <table>
+        <thead>
+            <tr>
+                <th rowspan="2">Item</th>
+                <th colspan="7">Week 2</th>
+            </tr>
+            <tr>
+                <th>Sun</th>
+                <th>Mon</th>
+                <th>Tue</th>
+                <th>Wed</th>
+                <th>Thu</th>
+                <th>Fri</th>
+                <th>Sat</th>
+            </tr>
+        </thead>
+        <tbody id="week2">
+            <!-- Table rows for week 2 will be added dynamically -->
+        </tbody>
+    </table>
+    <label for="week2EndDate">Week 2 End Date:</label>
+    <input type="date" id="week2EndDate">
+    <br>
+    <button id="saveButton">Save Changes</button>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const week1 = document.getElementById("week1");
+            const week2 = document.getElementById("week2");
+            const saveButton = document.getElementById("saveButton");
+
+            const items = [
+                "Start Time",
+                "End Time",
+                "Lunch Start",
+                "Lunch End",
+                "Hours Worked",
+                "Absence Codes"
+            ];
+
+            const getDatesInPeriod = (startDate, periodLength) => {
+                const dates = [];
+                for (let i = 0; i < periodLength; i++) {
+                    const date = new Date(startDate.valueOf());
+                    date.setDate(startDate.getDate() + i);
+                    dates.push(date);
+                }
+                return dates;
+            };
+
+            const calculateHours = (startTime, endTime, lunchStart, lunchEnd) => {
+                if (!startTime || !endTime) return "0";
+            const start = new Date("1970-01-01T" + startTime);
+            const end = new Date("1970-01-01T" + endTime);
+            let lunchDuration = 0;
+
+            if (lunchStart && lunchEnd) {
+                const lunchS = new Date("1970-01-01T" + lunchStart);
+                const lunchE = new Date("1970-01-01T" + lunchEnd);
+                lunchDuration = (lunchE - lunchS) / (1000 * 60 * 60);
+            }
+
+            const hours = (end - start) / (1000 * 60 * 60) - lunchDuration;
+            return hours.toFixed(2);
+        };
+
+        const updateHoursWorked = (week, dayIndex) => {
+            const startTimeInputs = week.querySelectorAll("tr:nth-child(2) td input");
+            const endTimeInputs = week.querySelectorAll("tr:nth-child(3) td input");
+            const lunchStartInputs = week.querySelectorAll("tr:nth-child(4) td input");
+            const lunchEndInputs = week.querySelectorAll("tr:nth-child(5) td input");
+            const hoursWorkedCells = week.querySelectorAll("tr:nth-child(6) td");
+
+            const startTime = startTimeInputs[dayIndex].value;
+            const endTime = endTimeInputs[dayIndex].value;
+            const lunchStart = lunchStartInputs[dayIndex].value;
+            const lunchEnd = lunchEndInputs[dayIndex].value;
+
+            hoursWorkedCells[dayIndex].textContent = calculateHours(
+                startTime,
+                endTime,
+                lunchStart,
+                lunchEnd
+            );
+        };
+
+        const renderWeek = (week, startDate) => {
+            const dates = getDatesInPeriod(startDate, 7);
+
+            items.forEach((item, rowIndex) => {
+                const row = document.createElement("tr");
+
+                const headerCell = document.createElement("th");
+                headerCell.textContent = item;
+                row.appendChild(headerCell);
+
+                dates.forEach((_, dayIndex) => {
+                    const cell = document.createElement("td");
+
+                    if (rowIndex < 4) {
+                        const input = document.createElement("input");
+                        input.type = "time";
+                        input.addEventListener("input", () => updateHoursWorked(week, dayIndex));
+                        cell.appendChild(input);
+                    } else if (rowIndex === 5) {
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        cell.appendChild(input);
+                    }
+
+                    row.appendChild(cell);
+                });
+
+                week.appendChild(row);
+            });
+        };
+
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - startDate.getDay() - 7);
+        renderWeek(week1, startDate);
+
+        const startDateWeek2 = new Date(startDate);
+        startDateWeek2.setDate(startDate.getDate() + 7);
+        renderWeek(week2, startDateWeek2);
+
+        saveButton.addEventListener("click", () => {
+            // Save data to local storage, server, or any desired storage method.
+            alert("Save button clicked. Implement saving logic as desired.");
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock and Top 5 Cryptocurrencies</title>
+    <style>
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        body, html {
+            font-family: Arial, sans-serif;
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            color: white;
+        }
+
+        .clock, .countdown, .top-cryptos {
+            margin-bottom: 1em;
+        }
+
+        .clock, .countdown {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .label {
+            font-size: 1em;
+            font-weight: normal;
+            margin-bottom: 0.5em;
+        }
+
+        .top-cryptos {
+            font-size: 1.2em;
+        }
+
+        .top-cryptos ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .top-cryptos li {
+            margin-bottom: 0.2em;
+        }
+	  .refresh-interval {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="clock">
+            <div class="label">Current Time</div>
+            <div id="clock">00:00:00</div>
+        </div>
+        <div class="top-cryptos">
+            <div class="label">Top 5 Cryptocurrencies</div>
+            <ul id="topCryptosList">
+                <li>Loading...</li>
+            </ul>
+        </div>
+        <div class="countdown">
+            <div class="label">Next Price Update</div>
+            <div id="countdown">60s</div>
+        </div>
+    </div>
+        <div class="countdown">
+            <div class="label">Next Price Update</div>
+            <div id="countdown">60s</div>
+        </div>
+        <div class="refresh-interval">
+            <div class="label">Refresh Interval (seconds)</div>
+            <input type="number" id="refreshInterval" min="1" value="60">
+        </div>
+    </div>
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        async function fetchTopCryptocurrencies() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=5&page=1&sparkline=false');
+                if (!response.ok) {
+                    throw new Error('Error fetching data from the API');
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error("Error fetching top cryptocurrencies:", error);
+                return [];
+            }
+        }
+
+        async function updateTopCryptocurrencies() {
+            const cryptos = await fetchTopCryptocurrencies();
+            const listElement = document.getElementById("topCryptosList");
+            listElement.innerHTML = '';
+
+            if (cryptos.length === 0) {
+                const listItem = document.createElement('li');
+                listItem.textContent = 'Error fetching cryptocurrencies';
+                listElement.appendChild(listItem);
+            } else {
+                cryptos.forEach(crypto => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${crypto.name} (${crypto.symbol.toUpperCase()}): $${crypto.current_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    listElement.appendChild(listItem);
+                });
+            }
+        }
+
+        updateTopCryptocurrencies();
+
+        let countdownSeconds = parseInt(document.getElementById('refreshInterval').value);
+        function updateCountdown() {
+            document.getElementById('countdown').textContent = `${countdownSeconds}s`;
+            countdownSeconds -= 1;
+            if (countdownSeconds < 0) {
+                countdownSeconds = parseInt(document.getElementById('refreshInterval').value);
+                updateTopCryptocurrencies();
+            }
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        document.getElementById('refreshInterval').addEventListener('input', (event) => {
+            const newInterval = parseInt(event.target.value);
+            if (newInterval > 0) {
+                countdownSeconds = newInterval;
+            }
+        });
+    </script>
+</body>
+</html>
