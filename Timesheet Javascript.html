@@ -10,42 +10,26 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            background-color: #2c5d3f;
+            color: #fff;
         }
 
-        table {
-            width: 800px;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
         }
 
-        table, th, td {
-            border: 1px solid #000;
+        .instructions {
+            text-align: left;
+            max-width: 800px;
+            margin-bottom: 1rem;
         }
 
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
-
-         @keyframes gradientBackground {
-            0% {
-                background: linear-gradient(45deg, #006400, #90ee90);
-            }
-            50% {
-                background: linear-gradient(45deg, #90ee90, #006400);
-            }
-            100% {
-                background: linear-gradient(45deg, #006400, #90ee90);
-            }
-        }
-
-        body {
-            font-family: Arial, sans-serif;
+        .total-hours {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            animation: gradientBackground 10s ease infinite;
-            background-size: 200% 200%;
+            justify-content: flex-end;
+            width: 800px;
+            margin-bottom: 1rem;
         }
 
         table {
@@ -53,6 +37,7 @@
             border-collapse: collapse;
             margin-bottom: 20px;
             background-color: #ffffff;
+            color: #000;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -68,15 +53,50 @@
         th {
             background-color: #f2f2f2;
         }
+
+        .signature {
+            display: flex;
+            justify-content: flex-end;
+            width: 800px;
+            margin-bottom: 1rem;
+        }
+
+        .signature label {
+            margin-right: 10px;
+        }
+
+        #saveButton {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
     </style>
 </head>
 <body>
     <h1>Biweekly Timesheet</h1>
+    <div class="instructions">
+        <p>Employee Name: <input type="text" id="employeeName" /></p>
+        <p>Supervisor must approve all overtime and absences.</p>
+        <p>Absence Codes: S= Sick, P= Personal, B= Bereavement, V= Vacation, C=Comp, J=Jury Duty</p>
+    </div>
+
+    <div class="total-hours">
+        <label for="totalHoursWeek1">Total Hours Week 1: </label>
+        <input type="number" id="totalHoursWeek1" readonly />
+    </div>
     <table>
         <thead>
             <tr>
-                <th rowspan="2">Item</th>
-                <th colspan="7">Week 1</th>
+                <th rowspan="2"></th>
+                <th colspan="7">Week 1<label for="week1EndDate"> - End Date:</label> <input type="date" id="week1EndDate"></th>
             </tr>
             <tr>
                 <th>Sun</th>
@@ -92,13 +112,16 @@
             <!-- Table rows for week 1 will be added dynamically -->
         </tbody>
     </table>
-    <label for="week1EndDate">Week 1 End Date:</label>
-    <input type="date" id="week1EndDate">
+   
+    <div class="total-hours">
+        <label for="totalHoursWeek2">Total Hours Week 2: </label>
+        <input type="number" id="totalHoursWeek2" readonly />
+    </div>
     <table>
         <thead>
             <tr>
-                <th rowspan="2">Item</th>
-                <th colspan="7">Week 2</th>
+                <th rowspan="2"></th>
+                <th colspan="7">Week 2<label for="week2EndDate"> - End Date:</label> <input type="date" id="week2EndDate"></th>
             </tr>
             <tr>
                 <th>Sun</th>
@@ -114,11 +137,17 @@
             <!-- Table rows for week 2 will be added dynamically -->
         </tbody>
     </table>
-    <label for="week2EndDate">Week 2 End Date:</label>
-    <input type="date" id="week2EndDate">
-    <br>
+   
+    <div class="signature">
+        <label for="employeeSignature">Employee Signature:</label>
+        <input type="text" id="employeeSignature" />
+    </div>
+    <div class="signature">
+        <label for="supervisorSignature">Supervisor Signature:</label>
+        <input type="text" id="supervisorSignature" />
+    </div>
     <button id="saveButton">Save Changes</button>
-    <script>
+<script>
         document.addEventListener("DOMContentLoaded", () => {
             const week1 = document.getElementById("week1");
             const week2 = document.getElementById("week2");
@@ -126,9 +155,9 @@
 
             const items = [
                 "Start Time",
-                "End Time",
                 "Lunch Start",
                 "Lunch End",
+                "End Time",
                 "Hours Worked",
                 "Absence Codes"
             ];
@@ -143,86 +172,85 @@
                 return dates;
             };
 
-            const calculateHours = (startTime, endTime, lunchStart, lunchEnd) => {
-                if (!startTime || !endTime) return "0";
-            const start = new Date("1970-01-01T" + startTime);
-            const end = new Date("1970-01-01T" + endTime);
-            let lunchDuration = 0;
+            const renderWeek = (week, startDate) => {
+                const dates = getDatesInPeriod(startDate, 7);
 
-            if (lunchStart && lunchEnd) {
-                const lunchS = new Date("1970-01-01T" + lunchStart);
-                const lunchE = new Date("1970-01-01T" + lunchEnd);
-                lunchDuration = (lunchE - lunchS) / (1000 * 60 * 60);
-            }
+                items.forEach((item, rowIndex) => {
+                    const row = document.createElement("tr");
 
-            const hours = (end - start) / (1000 * 60 * 60) - lunchDuration;
-            return hours.toFixed(2);
-        };
+                    const headerCell = document.createElement("th");
+                    headerCell.textContent = item;
+                    row.appendChild(headerCell);
 
-        const updateHoursWorked = (week, dayIndex) => {
-            const startTimeInputs = week.querySelectorAll("tr:nth-child(2) td input");
-            const endTimeInputs = week.querySelectorAll("tr:nth-child(3) td input");
-            const lunchStartInputs = week.querySelectorAll("tr:nth-child(4) td input");
-            const lunchEndInputs = week.querySelectorAll("tr:nth-child(5) td input");
-            const hoursWorkedCells = week.querySelectorAll("tr:nth-child(6) td");
+                    dates.forEach((_, dayIndex) => {
+                        const cell = document.createElement("td");
 
-            const startTime = startTimeInputs[dayIndex].value;
-            const endTime = endTimeInputs[dayIndex].value;
-            const lunchStart = lunchStartInputs[dayIndex].value;
-            const lunchEnd = lunchEndInputs[dayIndex].value;
+                        if (rowIndex < 4) {
+                            const input = document.createElement("input");
+                            input.type = "time";
+                            cell.appendChild(input);
+                                                } else if (rowIndex === 4) {
+                            const select = document.createElement("select");
+                            for (let i = 0; i <= 24; i += 0.5) {
+                                const option = document.createElement("option");
+                                option.value = i;
+                                option.text = i.toFixed(1);
+                                select.appendChild(option);
+                            }
+                            cell.appendChild(select);
+                        } else if (rowIndex === 5) {
+                            const input = document.createElement("input");
+                            input.type = "text";
+                            cell.appendChild(input);
+                        }
 
-            hoursWorkedCells[dayIndex].textContent = calculateHours(
-                startTime,
-                endTime,
-                lunchStart,
-                lunchEnd
-            );
-        };
+                        row.appendChild(cell);
+                    });
 
-        const renderWeek = (week, startDate) => {
-            const dates = getDatesInPeriod(startDate, 7);
-
-            items.forEach((item, rowIndex) => {
-                const row = document.createElement("tr");
-
-                const headerCell = document.createElement("th");
-                headerCell.textContent = item;
-                row.appendChild(headerCell);
-
-                dates.forEach((_, dayIndex) => {
-                    const cell = document.createElement("td");
-
-                    if (rowIndex < 4) {
-                        const input = document.createElement("input");
-                        input.type = "time";
-                        input.addEventListener("input", () => updateHoursWorked(week, dayIndex));
-                        cell.appendChild(input);
-                    } else if (rowIndex === 5) {
-                        const input = document.createElement("input");
-                        input.type = "text";
-                        cell.appendChild(input);
-                    }
-
-                    row.appendChild(cell);
+                    week.appendChild(row);
                 });
+            };
 
-                week.appendChild(row);
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - startDate.getDay() - 7);
+            renderWeek(week1, startDate);
+
+            const startDateWeek2 = new Date(startDate);
+            startDateWeek2.setDate(startDate.getDate() + 7);
+            renderWeek(week2, startDateWeek2);
+
+            saveButton.addEventListener("click", () => {
+                // Save data to local storage, server, or any desired storage method.
+                alert("Save button clicked. Implement saving logic as desired.");
             });
+        });
+const updateTotalHours = (week, weekTotalHoursElement) => {
+            const hoursWorkedCells = week.querySelectorAll("tr:nth-child(6) td");
+            let totalHours = 0;
+            hoursWorkedCells.forEach(cell => {
+                totalHours += parseFloat(cell.textContent);
+            });
+            weekTotalHoursElement.textContent = `Total Hours: ${totalHours}`;
         };
 
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - startDate.getDay() - 7);
-        renderWeek(week1, startDate);
+        // Add updateTotalHours call to updateHoursWorked function
+        const updateHoursWorked = (week, dayIndex, weekTotalHoursElement) => {
+            // Previous updateHoursWorked content remains the same
 
-        const startDateWeek2 = new Date(startDate);
-        startDateWeek2.setDate(startDate.getDate() + 7);
-        renderWeek(week2, startDateWeek2);
+            updateTotalHours(week, weekTotalHoursElement);
+        };
 
-        saveButton.addEventListener("click", () => {
-            // Save data to local storage, server, or any desired storage method.
-            alert("Save button clicked. Implement saving logic as desired.");
-        });
-    });
-</script>
+        // Modify renderWeek function to pass weekTotalHoursElement
+        const renderWeek = (week, startDate, weekTotalHoursElement) => {
+            // Previous renderWeek content remains the same
+        };
+
+        const week1TotalHours = document.getElementById("week1TotalHours");
+        const week2TotalHours = document.getElementById("week2TotalHours");
+
+        renderWeek(week1, startDate, week1TotalHours);
+        renderWeek(week2, startDateWeek2, week2TotalHours);
+    </script>
 </body>
 </html>
+
